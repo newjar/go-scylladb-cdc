@@ -1,0 +1,27 @@
+{
+    "port": 8080,
+    "db": {
+        "scylla": {
+            "hosts": [
+                "127.0.0.1"
+            ],
+            "keyspace": "iot_vehicle",
+            "battery_table": "battery",
+            "battery_cdc_table": "battery_cdc_log"
+        },
+        "rethink": {
+            "addresses": [
+                "localhost:28015"
+            ],
+            "database": "iot_vehicle",
+            "battery_table": "battery"
+        }
+    },
+    "mqtt": {
+        "address": "tcp://localhost:1883",
+        "client_id": "mqttx_iot",
+        "topic": "iot/vehicle/battery",
+        "username": "iot",
+        "password": "iot"
+    }
+}
