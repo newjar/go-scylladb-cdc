@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  scylladb:
+    image: scylladb/scylla
+    container_name: scylladb
+    ports:
+      - "9042:9042"
+      - "9160:9160"
+
+  mqtt5:
+    image: eclipse-mosquitto
+    container_name: mqtt5
+    ports:
+      - "1883:1883" #tcp
+      - "9001:9001" #websocket
+    volumes:
+      - ./config:/mosquitto/config:rw
+      - ./data:/mosquitto/data:rw
+      - ./log:/mosquitto/log:rw
+
+  mqttx-web:
+    image: emqx/mqttx-web:latest
+    container_name: mqttx-web
+    ports:
+      - "8085:80"
+    depends_on:
+      - mqtt5
+
+  rethinkdb-node1:
+    image: rethinkdb:latest
+    container_name: rethinkdb-node1
+    ports:
+      - "28015:28015"
+      - "29015:29015"
+      - "8080:8080"
+
+networks:
+  default:
+    name: scylla-cdc-network
+
+volumes:
+  config:
+  data:
+  log:

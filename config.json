@@ -1,19 +1,19 @@
 {
-    "port": 8080,
+    "port": 8081,
     "db": {
         "scylla": {
             "hosts": [
                 "127.0.0.1"
             ],
-            "keyspace": "iot_vehicle",
+            "keyspace": "vehicle_monitoring",
             "battery_table": "battery",
-            "battery_cdc_table": "battery_cdc_log"
+            "battery_cdc_table": "battery_scylla_cdc_log"
         },
         "rethink": {
             "addresses": [
                 "localhost:28015"
             ],
-            "database": "iot_vehicle",
+            "database": "vehicle_monitoring",
             "battery_table": "battery"
         }
     },

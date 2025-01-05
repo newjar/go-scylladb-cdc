@@ -4,26 +4,30 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go-iot-cdc/config"
-	"go-iot-cdc/internal/cdc"
-	"go-iot-cdc/internal/db"
-	"go-iot-cdc/internal/mqtt"
-	"go-iot-cdc/model"
-	"log/slog"
+	"go-scylladb-cdc/config"
+	"go-scylladb-cdc/internal/cdc"
+	"go-scylladb-cdc/internal/db"
+	"go-scylladb-cdc/internal/mqtt"
+	"go-scylladb-cdc/model"
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog"
+	_ "github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
 
-func buildLogger() *slog.Logger {
-	logHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
-	return slog.New(logHandler)
+func buildLogger() *zerolog.Logger {
+	logger := new(zerolog.Logger)
+	zerolog.TimeFieldFormat = time.RFC3339
+	*logger = zerolog.New(os.Stdout).With().Timestamp().Logger().Level(zerolog.InfoLevel)
+	return logger
 }
 
-func buildApp(logger *slog.Logger) *cli.App {
+func buildApp(logger *zerolog.Logger) *cli.App {
 	app := cli.NewApp()
 	app.Usage = "Change Data Capture (CDC) for IoT"
 	app.Version = Version
@@ -39,7 +43,7 @@ func buildApp(logger *slog.Logger) *cli.App {
 	return app
 }
 
-func mainAction(logger *slog.Logger) cli.ActionFunc {
+func mainAction(logger *zerolog.Logger) cli.ActionFunc {
 	return func(cliCtx *cli.Context) error {
 		appCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -57,10 +61,10 @@ func mainAction(logger *slog.Logger) cli.ActionFunc {
 			config.DB.Rethink.Addresses,
 			config.DB.Rethink.Database,
 			config.DB.Rethink.BatteryTable); err != nil {
-			logger.Error("failed to create DB service", "error", err)
+			logger.Error().Err(err).Msg("failed to create DB service")
 			return err
 		} else {
-			logger.Info("connected into rethinkdb")
+			logger.Info().Msg("connected into rethinkdb")
 			dbService = svc
 		}
 
@@ -76,10 +80,10 @@ func mainAction(logger *slog.Logger) cli.ActionFunc {
 			config.MQTT.Password,
 			config.MQTT.Topic,
 			msgChan); err != nil {
-			logger.Error("failed to create MQTT service", "error", err)
+			logger.Error().Err(err).Msg("failed to create MQTT service")
 			return err
 		} else {
-			logger.Info("connected into mqtt-server")
+			logger.Info().Msg("connected into mqtt-server")
 			mqttService = svc
 		}
 
@@ -93,10 +97,10 @@ func mainAction(logger *slog.Logger) cli.ActionFunc {
 			config.DB.Scylla.Hosts,
 			dbService,
 			msgChan); err != nil {
-			logger.Error("failed to create CDC service", "error", err)
+			logger.Error().Err(err).Msg("failed to create CDC service")
 			return err
 		} else {
-			logger.Info("connected into scylladb")
+			logger.Info().Msg("connected into scylladb")
 			cdcService = svc
 			cdcService.Start()
 		}
@@ -120,7 +124,7 @@ func mainAction(logger *slog.Logger) cli.ActionFunc {
 		}(appCtx, cancel, wgApp, router)
 
 		if err := router.Listen(fmt.Sprintf(":%d", config.Port)); err != nil {
-			logger.Error("failed to start the server", "error", err)
+			logger.Error().Err(err).Msg("failed to start the server")
 		}
 
 		wgApp.Wait()
@@ -137,7 +141,7 @@ func main() {
 	defer stop()
 
 	if err := app.RunContext(ctx, os.Args); err != nil {
-		logger.Error("failed to run the app", "error", err)
+		logger.Error().Err(err).Msg("failed to run the app")
 		os.Exit(1)
 	}
 }

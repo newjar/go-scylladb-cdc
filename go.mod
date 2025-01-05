@@ -1,4 +1,4 @@
-module go-iot-cdc
+module go-scylladb-cdc
 
 go 1.22.6
 
@@ -6,6 +6,7 @@ require (
 	github.com/eclipse/paho.mqtt.golang v1.5.0
 	github.com/gocql/gocql v1.7.0
 	github.com/gofiber/fiber/v2 v2.52.6
+	github.com/rs/zerolog v1.33.0
 	github.com/scylladb/scylla-cdc-go v1.1.1
 	github.com/urfave/cli/v2 v2.27.5
 	gopkg.in/rethinkdb/rethinkdb-go.v6 v6.2.2

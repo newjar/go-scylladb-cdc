@@ -3,18 +3,20 @@ package mqtt
 import (
 	"context"
 	"encoding/json"
-	"go-iot-cdc/model"
-	"log/slog"
+	"fmt"
+	"go-scylladb-cdc/model"
+	"math/rand"
 	"sync"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/rs/zerolog"
 )
 
 type mqttService struct {
 	ctx    context.Context
 	wg     *sync.WaitGroup
-	logger *slog.Logger
+	logger *zerolog.Logger
 
 	mqttClient mqtt.Client
 	mqttToken  mqtt.Token
@@ -30,7 +32,7 @@ type MQTTService interface {
 
 func NewMQTTService(
 	parentCtx context.Context,
-	logger *slog.Logger,
+	logger *zerolog.Logger,
 	address, clientId, user, pass, topic string,
 	msgChan chan *model.Battery) (MQTTService, error) {
 
@@ -65,10 +67,7 @@ func NewMQTTService(
 
 	result.start()
 
-	go result.PublishMessage(&model.Battery{
-		ID:        "1",
-		EntryTime: time.Now(),
-	})
+	go result.FakeMessage()
 
 	return result, nil
 }
@@ -99,23 +98,40 @@ func (m *mqttService) onReceive() mqtt.MessageHandler {
 		data := new(model.Battery)
 
 		if err := json.Unmarshal(msg.Payload(), data); err != nil {
-			m.logger.Error("error while unmarshal message", "error", err)
+			m.logger.Error().Err(err).Msg("error while unmarshal message")
+			return
 		}
 
 		m.msgChan <- data
+	}
+}
 
-		m.logger.Info("Received message", "data", data)
+func (m *mqttService) FakeMessage() {
+	for {
+		message := new(model.Battery)
+		message.ID = fmt.Sprintf("id-%d", rand.Intn(10))
+		message.EntryTime = time.Now()
+		message.Voltage = rand.Float32() * 100
+		message.Current = rand.Float32() * 100
+		message.Capacity = rand.Float32() * 100
+		message.Power = rand.Intn(100)
+		message.Temperature = rand.Float32() * 100
+		message.SOC = rand.Intn(100)
+		message.InternalResistance = rand.Float32() * 100
+
+		m.PublishMessage(message)
+
+		time.Sleep(500 * time.Millisecond)
 	}
 }
 
 func (m *mqttService) PublishMessage(message *model.Battery) {
-	for {
-		msgByte, _ := json.Marshal(message)
-		if ok := m.mqttClient.Publish(m.topic, 0, false, msgByte).Wait(); !ok {
-			m.logger.Error("caught erorr while publish message")
-		}
-		time.Sleep(1 * time.Second)
+	msgByte, _ := json.Marshal(message)
+	if ok := m.mqttClient.Publish(m.topic, 0, false, msgByte).Wait(); !ok {
+		m.logger.Error().Msg("caught erorr while publish message")
+		return
 	}
+
 }
 
 func (m *mqttService) Stop() {
