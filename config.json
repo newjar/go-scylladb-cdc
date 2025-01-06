@@ -21,7 +21,7 @@
         "address": "tcp://localhost:1883",
         "client_id": "mqttx_iot",
         "topic": "iot/vehicle/battery",
-        "username": "iot",
-        "password": "iot"
+        "username": "",
+        "password": ""
     }
 }

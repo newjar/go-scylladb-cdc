@@ -48,8 +48,6 @@ func NewDBService(
 		logger:    logger,
 	}
 
-	go result.ReadChanges()
-
 	return result, nil
 }
 
@@ -59,38 +57,13 @@ func (d *dbService) Close() error {
 }
 
 func (d *dbService) Write(data *model.Battery) error {
-	record := map[string]interface{}{
-		"id":                  data.ID,
-		"entry_time":          data.EntryTime,
-		"voltage":             data.Voltage,
-		"current":             data.Current,
-		"capacity":            data.Capacity,
-		"power":               data.Power,
-		"temperature":         data.Temperature,
-		"soc":                 data.SOC,
-		"internal_resistance": data.InternalResistance,
-	}
-
 	if _, err := r.
 		Table(d.tableName).
-		Insert(record).
+		Insert(data).
 		RunWrite(d.session); err != nil {
 		return err
-	}
-	return nil
-}
+	} else {
 
-func (d *dbService) ReadChanges() error {
-	cursor, err := r.Table(d.tableName).Changes().Run(d.session)
-	if err != nil {
-		return err
 	}
-
-	var changeRow r.ChangeResponse
-	for cursor.Next(&changeRow) {
-		newValue := changeRow.NewValue.(map[string]interface{})
-		d.logger.Info().Msgf("read changes, id [%s] capacity [%.2f]", newValue["ID"], newValue["Capacity"])
-	}
-
 	return nil
 }
