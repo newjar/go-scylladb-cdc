@@ -17,13 +17,6 @@ services:
     volumes:
       - ./mqtt:/mosquitto/config:rw
 
-  mqttx-web:
-    image: emqx/mqttx-web:latest
-    container_name: mqttx-web
-    ports:
-      - "8085:80"
-    depends_on:
-      - mqtt5
 
   rethinkdb-node1:
     image: rethinkdb:latest
