@@ -29,7 +29,7 @@ func buildLogger() *zerolog.Logger {
 
 func buildApp(logger *zerolog.Logger) *cli.App {
 	app := cli.NewApp()
-	app.Usage = "Change Data Capture (CDC) for IoT"
+	app.Usage = "Example Usage For ScyllaDB CDC"
 	app.Version = Version
 	app.Flags = []cli.Flag{
 		&cli.PathFlag{
