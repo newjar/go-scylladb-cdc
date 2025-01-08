@@ -74,8 +74,8 @@ func (cs *cdcService) startBatteryChecker() {
 	go func() {
 		defer cs.wg.Done()
 		for data := range cs.batteryStatusChan {
-			if data.Capacity < 10 {
-				cs.logger.Warn().Msgf("current battery is low, id: [%s], capacity: [%.2f]", data.ID, data.Capacity)
+			if data.Current < 10 {
+				cs.logger.Warn().Msgf("current battery is low, id: [%s], current: [%.2f]", data.ID, data.Current)
 			}
 		}
 	}()
